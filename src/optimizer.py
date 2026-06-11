@@ -4,11 +4,16 @@
 import numpy as np
 from scipy.optimize import line_search
 # ==================================================
-def adam_optimizer(func, jac, x0, args=(), lr=0.01, beta1=0.9, beta2=0.999, eps=1e-8, maxiter=100):
+maxiter = 20
+tol = 1e-5
+
+def adam_optimizer(func, jac, x0, args=(), lr=0.01, beta1=0.9, beta2=0.999, 
+                   eps=1e-8, maxiter=maxiter):
     """Adam optimization algorithm."""
     x = np.array(x0, dtype=float)
     m = np.zeros_like(x)
     v = np.zeros_like(x)
+    x_best = x.copy()
     
     for t in range(1, maxiter + 1):
         g = jac(x, *args)
@@ -20,20 +25,25 @@ def adam_optimizer(func, jac, x0, args=(), lr=0.01, beta1=0.9, beta2=0.999, eps=
         v_hat = v / (1 - beta2 ** t)
         
         x -= lr * m_hat / (np.sqrt(v_hat) + eps)
+        lr *= 0.95 # Decay learning rate
         
-        if np.linalg.norm(g) < 1e-5:
+        if func(x, *args) < func(x_best, *args):
+            x_best = x.copy()
+        
+        if np.linalg.norm(g) < tol:
             break
-            
-    return x
+    
+    print(f"Adam optimizer converged in {t} iterations.")
+    return x_best
 
-def conjugate_gradient_optimizer(func, jac, x0, args=(), tol=1e-5, maxiter=100):
-    """Conjugate Gradient method follow 3D-Var handout p.8,9"""
+def conjugate_gradient_optimizer(func, jac, x0, args=(), tol=tol, maxiter=maxiter):
+    """Conjugate Gradient method with robust restarts"""
     x = np.array(x0, dtype=float)
     
     g = jac(x, *args)
     e = -g
     
-    for _ in range(maxiter):
+    for t in range(maxiter):
         if np.linalg.norm(g) < tol: break
             
         alpha = line_search(func, jac, x, e, g, args=args)[0]
@@ -49,5 +59,24 @@ def conjugate_gradient_optimizer(func, jac, x0, args=(), tol=1e-5, maxiter=100):
         
         x = x_new
         g = g_new
+    
+    print(f"CG optimizer converged in {t+1} iterations.")
+    return x
+
+def gradient_descent_optimizer(func, jac, x0, args=(), tol=tol, maxiter=maxiter):
+    """Gradient descent (GD)"""
+    x = np.array(x0, dtype=float)
+    
+    for t in range(maxiter):
+        g = jac(x, *args)
+        e = -g
+
+        if np.linalg.norm(g) < tol: break
+
+        alpha = line_search(func, jac, x, e, g, args=args)[0]
+        if alpha is None: alpha = 1e-4
         
+        x = x + alpha * e
+    
+    print(f"GD optimizer converged in {t+1} iterations.")
     return x

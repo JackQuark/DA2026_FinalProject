@@ -29,8 +29,9 @@ class ThreeDVar:
     def gradient(self, x, xb, y):
         """Computes the Jacobian/Gradient of the cost function."""
         # ∇J(x) = B^(-1)(x - xb) - H^T R^(-1) (y - Hx)
-        grad = self.B_inv @ (x - xb) + self.R_inv @ (self.H @ x - y)
-        return grad
+        grad_b = self.B_inv @ (x - xb) 
+        grad_o = self.H.T @ (self.R_inv @ (self.H @ x - y)) 
+        return grad_b + grad_o
 
     def _default_optimizer(self, func, jac, x0, args):
         """Default optimizer using CG(scipy)."""

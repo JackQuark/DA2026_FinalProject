@@ -41,36 +41,52 @@ x_true_0 = np.load("nature_run.npz")["x_true_0"]
 x_truth = np.load("nature_run.npz")["truth_trajectory"]
 
 # =========================================================
-# Step 2: Create simulated (synthetic) observations
-H = np.eye(N) # observation on all variables
-obs_variance = 0.5
-R = np.eye(N) * obs_variance
+# >>> simulating observations >>>
+obs_variance = 0.1
+obs_count = N
+# H = np.zeros((obs_count, N))
+# for i in range(obs_count):
+#     H[i, 2*i] = 1.0
+
+H = np.eye(N) 
+R = obs_variance * np.eye(obs_count)
 
 observations = []
 for cycle in range(1, total_cycles + 1):
     t_idx = cycle * assim_window
     truth_state = x_truth[t_idx]
-    # Add random Gaussian noise based on observation variance
-    obs = truth_state + np.random.normal(0, np.sqrt(obs_variance), N)
+    obs = H @ truth_state \
+        + np.random.normal(0, np.sqrt(obs_variance), obs_count)
     observations.append(obs)
-
+# <<< simulating observations <<<
 # =========================================================
-# Step 3: Run DA Experiments
-B_variance = 0.5
+# >>> background error covariance >>>
+B_variance = 0.1
 B = np.eye(N) * B_variance
-# initial background state (perturbed from truth)
+# B = np.zeros((N, N))
+# for i in range(N):
+#     for j in range(N):
+#         dist = min(abs(i - j), N - abs(i - j))
+#         B[i, j] = B_variance * np.exp(-(dist**2) / 2)
+# <<< background error covariance <<< 
+
+# initial background state
 x_b_0 = x_true_0 + np.random.normal(0, np.sqrt(obs_variance), N)
 
 # Initialize DA System
 da_system = ThreeDVar(B, R, H)
 
 # INJECT OPTIMIZATION METHOD HERE
-op_name = "CG"
+op_name = "adam"
+# op_name = "CG"
+# op_name = "GD"
 match op_name:
     case "adam":
         da_system.set_optimizer(adam_optimizer)
     case "CG":
         da_system.set_optimizer(conjugate_gradient_optimizer)
+    case "GD":
+        da_system.set_optimizer(gradient_descent_optimizer)
 
 x_b = np.copy(x_b_0)
 x_a_list = [x_b]
@@ -96,7 +112,7 @@ for step in range(1, total_steps + 1):
 
 x_a = np.array(x_a_list)
 
-ofname = f"x_a_{op_name}.npz"
+ofname = f"x_a_I_{op_name}.npz"
 if not os.path.exists(ofname):
     np.savez(ofname, x_a=x_a)
 else:

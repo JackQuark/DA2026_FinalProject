@@ -16,7 +16,7 @@ def plot_hovmoller(x_a_files, x_t):
     
     x_as = [np.load(fname)['x_a'] for fname in x_a_files]
     
-    fig, axs = plt.subplots(1, N_subplots, figsize=(6, 3*N_subplots), sharex=True, sharey=True)
+    fig, axs = plt.subplots(1, N_subplots, figsize=(4*N_subplots, 6), sharex=True, sharey=True)
     axs: list[plt.Axes]
 
     _x = np.arange(N) + 1
@@ -24,9 +24,11 @@ def plot_hovmoller(x_a_files, x_t):
     
     _cbar_kwargs = {"orientation": "vertical", "aspect": 30, "shrink": 0.6}
 
+    max_error = max(np.max(np.abs(x_a - x_t)) for x_a in x_as)
+
     for i, x_a in enumerate(x_as):
         im = axs[i].pcolormesh(
-            _x, _t, x_a - x_t, norm=CenteredNorm(),
+            _x, _t, x_a - x_t, norm=CenteredNorm(vcenter=0, halfrange=max_error),
             cmap="RdBu_r"
         )
         axs[i].set_title(f"{os.path.splitext(x_a_files[i])[0].split('_')[-1]}")
@@ -57,11 +59,19 @@ def plot_rmse(x_a_files, x_t):
     
 # ==================================================
 def main():
+    exp = f'I'
     x_t = np.load("nature_run.npz")["truth_trajectory"]
     x_0 = np.load("nature_run.npz")["x_true_0"]
-    x_a_files = [f for f in os.listdir() if f.startswith("x_a_") and f.endswith(".npz")]
+    x_a_files = [f for f in os.listdir() if f.startswith(f"x_a_{exp}_")]
+    if not x_a_files:
+        print(f"No analysis files found for exp.{exp}")
+        return
+    
     fig, ax = plot_rmse(x_a_files, x_t)
+    ax.set_title(f"RMSE of Analysis Trajectories (exp.{exp})")
     fig, axs = plot_hovmoller(x_a_files, x_t)
+    fig.suptitle(f"Hovmöller Diagram of Analysis Errors (exp.{exp})", fontsize=14)
+    
     
 # ==================================================
 from time import perf_counter
