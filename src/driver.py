@@ -22,7 +22,7 @@ class Driver:
         return x + (self.dt / 6) * (k1 + 2 * k2 + 2 * k3 + k4)
 
     def step(self, x, t=0.0):
-        """Advances the state by a single time step."""
+        """Integrates the model over a single step."""
         return self._RK4_step(x, t)
 
     def integrate(self, x0, steps, t0=0.0):

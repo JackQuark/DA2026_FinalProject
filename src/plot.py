@@ -12,8 +12,6 @@ def plot_hovmoller(x_a_files, x_t):
     N_subplots = len(x_a_files)
     total_steps, N = x_t.shape
     
-    print(N)
-    
     x_as = [np.load(fname)['x_a'] for fname in x_a_files]
     
     fig, axs = plt.subplots(1, N_subplots, figsize=(4*N_subplots, 6), sharex=True, sharey=True)
@@ -59,7 +57,7 @@ def plot_rmse(x_a_files, x_t):
     
 # ==================================================
 def main():
-    exp = f'I'
+    exp = f'III'
     x_t = np.load("nature_run.npz")["truth_trajectory"]
     x_0 = np.load("nature_run.npz")["x_true_0"]
     x_a_files = [f for f in os.listdir() if f.startswith(f"x_a_{exp}_")]
@@ -69,14 +67,19 @@ def main():
     
     fig, ax = plot_rmse(x_a_files, x_t)
     ax.set_title(f"RMSE of Analysis Trajectories (exp.{exp})")
-    fig, axs = plot_hovmoller(x_a_files, x_t)
-    fig.suptitle(f"Hovmöller Diagram of Analysis Errors (exp.{exp})", fontsize=14)
-    
+    # fig, axs = plot_hovmoller(x_a_files, x_t)
+    # fig.suptitle(f"Hovmöller Diagram of Analysis Errors (exp.{exp})", fontsize=14)
+
+def validation(exp: str):
+    x_t = np.load("nature_run.npz")["truth_trajectory"]
+    print(x_t.shape)
+    fig, ax = plot_rmse([f"x_a_{exp}_OI.npz", f"x_a_{exp}_CG.npz"], x_t)
     
 # ==================================================
 from time import perf_counter
 if __name__ == '__main__':
     start_time = perf_counter()
     main()
+    # validation("I")
     end_time = perf_counter()
     print('\ntime :%.3f ms' %((end_time - start_time)*1000))

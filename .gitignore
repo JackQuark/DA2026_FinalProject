@@ -3,5 +3,7 @@ __pycache__
 *.npz
 
 .vscode
+*docx
 *pptx
+*.tmp
 test*
