@@ -14,5 +14,6 @@ Data Assimilation 2026 - Final Project
 2. plot.py: script to visualize the results
 3. optimizer.py: implementation of the optimization algorithms (Adam, CG, SGD)
 4. DASystem.py: implementation of 3D-Var / OI
-5. driver.py: numerical solver for the given model (time advance)
-6. lorenz96.py: implementation of the Lorenz-96 model
+5. nmc_method.py: implementation of the NMC method for estimating the background error covariance
+6. driver.py: numerical solver for the given model (time advance)
+7. lorenz96.py: implementation of the Lorenz-96 model
